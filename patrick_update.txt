@@ -1,0 +1,46 @@
+TENSORFLOW DIRECTORY:
+Users/Pranav/miniconda3/lib/python3.7/site-packages/tensorflow
+
+
+
+
+pasted patrick.py in .../python/training/
+
+
+added line 43 to .../python/training/training.py:
+from tensorflow.python.training.patrick import PatrickOptimizer
+
+
+added line 24 to .../_api/v1/train/__init__.py
+from tensorflow.python.training.patrick import PatrickOptimizer
+
+
+added line 316 to .../python/training/gen_training_ops.py:
+
+def apply_patrick(var, m, v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, use_locking=False, use_nesterov=False, name=None):
+  r"""
+  """
+  _ctx = _context._context
+  if _ctx is not None and _ctx._eager_context.is_eager:
+    raise RuntimeError("apply_patrick op does not support eager execution. Arg 'out' is a ref.")
+  # Add nodes to the TensorFlow graph.
+  if use_locking is None:
+    use_locking = False
+  use_locking = _execute.make_bool(use_locking, "use_locking")
+  if use_nesterov is None:
+    use_nesterov = False
+  use_nesterov = _execute.make_bool(use_nesterov, "use_nesterov")
+  _, _, _op = _op_def_lib._apply_op_helper(
+        "ApplyAdam", var=var, m=m, v=v, beta1_power=beta1_power,
+                     beta2_power=beta2_power, lr=lr, beta1=beta1, beta2=beta2,
+                     epsilon=epsilon, grad=grad, use_locking=use_locking,
+                     use_nesterov=use_nesterov, name=name)
+  _result = _op.outputs[:]
+  _inputs_flat = _op.inputs
+  _attrs = ("T", _op.get_attr("T"), "use_locking",
+            _op.get_attr("use_locking"), "use_nesterov",
+            _op.get_attr("use_nesterov"))
+  _execute.record_gradient(
+      "ApplyPatrick", _inputs_flat, _attrs, _result, name)
+  _result, = _result
+  return _result
